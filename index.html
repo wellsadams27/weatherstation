@@ -97,6 +97,45 @@
       margin-right: 6px;
     }
     .status-dot.online { background: #00b894; }
+    .forecast-card {
+      max-width: 900px;
+      margin: 0 auto 24px auto;
+      background: #1a1d27;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #2a2d3a;
+    }
+    .forecast-card .forecast-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .forecast-card .forecast-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #c0c0c0;
+    }
+    .forecast-card .forecast-meta {
+      font-size: 11px;
+      color: #444;
+      margin-top: 12px;
+    }
+    .refresh-btn {
+      display: block;
+      margin: 0 auto 24px auto;
+      background: #2a2d3a;
+      color: #888;
+      border: 1px solid #3a3d4a;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .refresh-btn:hover { background: #3a3d4a; color: #ccc; }
     .last-updated {
       text-align: center;
       font-size: 11px;
@@ -155,6 +194,16 @@
     </div>
   </div>
 
+  <p class="section-title">AI Forecast</p>
+
+  <div class="forecast-card">
+    <div class="forecast-label">6 Hour Forecast — Powered by Groq</div>
+    <div class="forecast-text" id="forecast">Waiting for sensor data...</div>
+    <div class="forecast-meta" id="forecast-meta"></div>
+  </div>
+
+  <button class="refresh-btn" onclick="getForecast()">Refresh Forecast</button>
+
   <p class="section-title">Station Status</p>
 
   <div class="status-bar">
@@ -168,43 +217,128 @@
 
   <script>
     // ---- REPLACE THESE ----
-    const channelID  = "3307817";
-    const readAPIKey = "H9TY5CZFFGZIGNOX";
+    const channelID   = "YOUR_CHANNEL_ID";
+    const readAPIKey  = "YOUR_THINGSPEAK_READ_API_KEY";
+    const groqAPIKey  = "YOUR_GROQ_API_KEY";
     // -----------------------
 
-    function fetchData() {
-      const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('temp').textContent     = parseFloat(data.field1).toFixed(1);
-          document.getElementById('humidity').textContent = parseFloat(data.field2).toFixed(1);
-          document.getElementById('pressure').textContent = parseFloat(data.field3).toFixed(1);
-          document.getElementById('uv').textContent       = parseFloat(data.field4).toFixed(1);
-          document.getElementById('wind').textContent     = parseFloat(data.field5).toFixed(1);
-          document.getElementById('winddir').textContent  = parseFloat(data.field6).toFixed(0);
-          document.getElementById('rain').textContent     = parseFloat(data.field7).toFixed(1);
-          document.getElementById('raining').textContent  = data.field8 == 1 ? "Yes" : "No";
+    let currentData = {};
+    let historyData = [];
 
-          // Update status
-          document.getElementById('dot').classList.add('online');
-          document.getElementById('status-text').textContent = "Online";
-
-          // Update last updated time
-          const time = new Date(data.created_at);
-          document.getElementById('updated').textContent = "Last updated: " + time.toLocaleTimeString();
-        })
-        .catch(error => {
-          document.getElementById('status-text').textContent = "Connection error";
-          document.getElementById('dot').classList.remove('online');
-          console.error('Error:', error);
-        });
+    function calcTrend(current, previous, unit) {
+      if (!previous) return "stable";
+      const diff = current - previous;
+      if (Math.abs(diff) < 0.5) return "stable";
+      return diff > 0 ? `rising ${Math.abs(diff).toFixed(1)}${unit}` : `falling ${Math.abs(diff).toFixed(1)}${unit}`;
     }
 
-    // Fetch immediately then every 30 seconds
+    function fetchData() {
+      // Fetch latest reading
+      const latestUrl = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
+      // Fetch last 6 readings for trend calculation
+      const historyUrl = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=6`;
+
+      Promise.all([
+        fetch(latestUrl).then(r => r.json()),
+        fetch(historyUrl).then(r => r.json())
+      ]).then(([latest, history]) => {
+        // Update display
+        document.getElementById('temp').textContent     = parseFloat(latest.field1).toFixed(1);
+        document.getElementById('humidity').textContent = parseFloat(latest.field2).toFixed(1);
+        document.getElementById('pressure').textContent = parseFloat(latest.field3).toFixed(1);
+        document.getElementById('uv').textContent       = parseFloat(latest.field4).toFixed(1);
+        document.getElementById('wind').textContent     = parseFloat(latest.field5).toFixed(1);
+        document.getElementById('winddir').textContent  = parseFloat(latest.field6).toFixed(0);
+        document.getElementById('rain').textContent     = parseFloat(latest.field7).toFixed(1);
+        document.getElementById('raining').textContent  = latest.field8 == 1 ? "Yes" : "No";
+
+        document.getElementById('dot').classList.add('online');
+        document.getElementById('status-text').textContent = "Online";
+
+        const time = new Date(latest.created_at);
+        document.getElementById('updated').textContent = "Last updated: " + time.toLocaleTimeString();
+
+        // Store for trend calculation
+        currentData = latest;
+        historyData = history.feeds;
+
+      }).catch(error => {
+        document.getElementById('status-text').textContent = "Connection error";
+        document.getElementById('dot').classList.remove('online');
+      });
+    }
+
+    function getForecast() {
+      if (!currentData.field1) {
+        document.getElementById('forecast').textContent = "Waiting for sensor data...";
+        return;
+      }
+
+      document.getElementById('forecast').textContent = "Generating forecast...";
+
+      // Calculate trends from history
+      const oldest = historyData[0];
+      const tempTrend     = calcTrend(parseFloat(currentData.field1), parseFloat(oldest.field1), "°F");
+      const humidTrend    = calcTrend(parseFloat(currentData.field2), parseFloat(oldest.field2), "%");
+      const pressureTrend = calcTrend(parseFloat(currentData.field3), parseFloat(oldest.field3), " hPa");
+      const windTrend     = calcTrend(parseFloat(currentData.field5), parseFloat(oldest.field5), " mph");
+
+      const now = new Date();
+      const prompt = `You are a concise weather forecasting assistant for a personal weather station.
+
+Current readings from Thomaston, Maine (coastal Knox County):
+- Temperature: ${parseFloat(currentData.field1).toFixed(1)}°F, ${tempTrend} over last 2 hours
+- Humidity: ${parseFloat(currentData.field2).toFixed(1)}%, ${humidTrend} over last 2 hours
+- Pressure: ${parseFloat(currentData.field3).toFixed(1)} hPa, ${pressureTrend} over last 2 hours
+- Wind Speed: ${parseFloat(currentData.field5).toFixed(1)} mph, ${windTrend} over last 2 hours
+- Wind Direction: ${parseFloat(currentData.field6).toFixed(0)}°
+- UV Index: ${parseFloat(currentData.field4).toFixed(1)}
+- Rainfall today: ${parseFloat(currentData.field7).toFixed(1)}mm
+- Currently raining: ${currentData.field8 == 1 ? "Yes" : "No"}
+- Time: ${now.toLocaleTimeString()}, Season: ${getSeason()}
+
+Give a 2-3 sentence plain English 6 hour forecast. Be specific and practical.`;
+
+      fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqAPIKey}`
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 150,
+          temperature: 0.4
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        const forecast = data.choices[0].message.content;
+        document.getElementById('forecast').textContent = forecast;
+        document.getElementById('forecast-meta').textContent = 
+          "Generated at " + new Date().toLocaleTimeString() + " · Groq LLaMA 3";
+      })
+      .catch(error => {
+        document.getElementById('forecast').textContent = "Forecast unavailable — check API key";
+      });
+    }
+
+    function getSeason() {
+      const month = new Date().getMonth();
+      if (month >= 2 && month <= 4) return "Spring";
+      if (month >= 5 && month <= 7) return "Summer";
+      if (month >= 8 && month <= 10) return "Autumn";
+      return "Winter";
+    }
+
+    // Fetch data immediately then every 30 seconds
     fetchData();
     setInterval(fetchData, 30000);
+
+    // Generate forecast on load after short delay, then every 10 minutes
+    setTimeout(() => getForecast(), 3000);
+    setInterval(getForecast, 600000);
   </script>
 
 </body>
