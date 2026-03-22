@@ -217,9 +217,9 @@
 
   <script>
     // ---- REPLACE THESE ----
-    const channelID   = "3307817";
-    const readAPIKey  = "H9TY5CZFFGZIGNOX";
-    const groqAPIKey  = "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";
+    const channelID  = "3307817";
+    const readAPIKey = "H9TY5CZFFGZIGNOX";
+    const groqAPIKey = "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";
     // -----------------------
 
     let currentData = {};
@@ -233,16 +233,13 @@
     }
 
     function fetchData() {
-      // Fetch latest reading
-      const latestUrl = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
-      // Fetch last 6 readings for trend calculation
+      const latestUrl  = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
       const historyUrl = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=6`;
 
       Promise.all([
         fetch(latestUrl).then(r => r.json()),
         fetch(historyUrl).then(r => r.json())
       ]).then(([latest, history]) => {
-        // Update display
         document.getElementById('temp').textContent     = parseFloat(latest.field1).toFixed(1);
         document.getElementById('humidity').textContent = parseFloat(latest.field2).toFixed(1);
         document.getElementById('pressure').textContent = parseFloat(latest.field3).toFixed(1);
@@ -258,7 +255,6 @@
         const time = new Date(latest.created_at);
         document.getElementById('updated').textContent = "Last updated: " + time.toLocaleTimeString();
 
-        // Store for trend calculation
         currentData = latest;
         historyData = history.feeds;
 
@@ -276,8 +272,7 @@
 
       document.getElementById('forecast').textContent = "Generating forecast...";
 
-      // Calculate trends from history
-      const oldest = historyData[0];
+      const oldest      = historyData[0];
       const tempTrend     = calcTrend(parseFloat(currentData.field1), parseFloat(oldest.field1), "°F");
       const humidTrend    = calcTrend(parseFloat(currentData.field2), parseFloat(oldest.field2), "%");
       const pressureTrend = calcTrend(parseFloat(currentData.field3), parseFloat(oldest.field3), " hPa");
@@ -303,24 +298,31 @@ Give a 2-3 sentence plain English 6 hour forecast. Be specific and practical.`;
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${groqAPIKey}`
+          "Authorization": "Bearer " + groqAPIKey.trim()
         },
         body: JSON.stringify({
           model: "llama3-8b-8192",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 150,
           temperature: 0.4
-        })
+        }),
+        redirect: "follow"
       })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          return r.text().then(t => { throw new Error(t); });
+        }
+        return r.json();
+      })
       .then(data => {
         const forecast = data.choices[0].message.content;
         document.getElementById('forecast').textContent = forecast;
-        document.getElementById('forecast-meta').textContent = 
+        document.getElementById('forecast-meta').textContent =
           "Generated at " + new Date().toLocaleTimeString() + " · Groq LLaMA 3";
       })
       .catch(error => {
-        document.getElementById('forecast').textContent = "Forecast unavailable — check API key";
+        console.error("Groq error:", error.message);
+        document.getElementById('forecast').textContent = "Forecast unavailable — check console for details";
       });
     }
 
@@ -332,11 +334,9 @@ Give a 2-3 sentence plain English 6 hour forecast. Be specific and practical.`;
       return "Winter";
     }
 
-    // Fetch data immediately then every 30 seconds
     fetchData();
     setInterval(fetchData, 30000);
 
-    // Generate forecast on load after short delay, then every 10 minutes
     setTimeout(() => getForecast(), 3000);
     setInterval(getForecast, 600000);
   </script>
