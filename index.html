@@ -158,13 +158,54 @@
   <p class="section-title">Station Status</p>
 
   <div class="status-bar">
-    <span><span class="status-dot" id="dot"></span><span id="status-text">Waiting for data</span></span>
+    <span><span class="status-dot" id="dot"></span><span id="status-text">Connecting...</span></span>
     <span id="battery">Battery: --</span>
     <span id="signal">Signal: --</span>
     <span id="solar">Solar: --</span>
   </div>
 
   <p class="last-updated" id="updated">Last updated: never</p>
+
+  <script>
+    // ---- REPLACE THESE ----
+    const channelID  = "3307817";
+    const readAPIKey = "H9TY5CZFFGZIGNOX";
+    // -----------------------
+
+    function fetchData() {
+      const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('temp').textContent     = parseFloat(data.field1).toFixed(1);
+          document.getElementById('humidity').textContent = parseFloat(data.field2).toFixed(1);
+          document.getElementById('pressure').textContent = parseFloat(data.field3).toFixed(1);
+          document.getElementById('uv').textContent       = parseFloat(data.field4).toFixed(1);
+          document.getElementById('wind').textContent     = parseFloat(data.field5).toFixed(1);
+          document.getElementById('winddir').textContent  = parseFloat(data.field6).toFixed(0);
+          document.getElementById('rain').textContent     = parseFloat(data.field7).toFixed(1);
+          document.getElementById('raining').textContent  = data.field8 == 1 ? "Yes" : "No";
+
+          // Update status
+          document.getElementById('dot').classList.add('online');
+          document.getElementById('status-text').textContent = "Online";
+
+          // Update last updated time
+          const time = new Date(data.created_at);
+          document.getElementById('updated').textContent = "Last updated: " + time.toLocaleTimeString();
+        })
+        .catch(error => {
+          document.getElementById('status-text').textContent = "Connection error";
+          document.getElementById('dot').classList.remove('online');
+          console.error('Error:', error);
+        });
+    }
+
+    // Fetch immediately then every 30 seconds
+    fetchData();
+    setInterval(fetchData, 30000);
+  </script>
 
 </body>
 </html>
