@@ -83,7 +83,7 @@ body{background:#0a0e14;font-family:system-ui,sans-serif;padding:16px;min-height
 <div class="header">
   <div class="header-left">
     <h1>Easter Hill Weather Station</h1>
-    <p>Owls Head, Knox County, Maine &mdash; 44.08&deg;N 69.18&deg;W</p>
+    <p>Owls Head, Knox County, Maine &mdash; 44.09&deg; -69.05&deg;W</p>
   </div>
   <div style="text-align:right">
     <div class="status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting...</span></div>
@@ -272,8 +272,8 @@ const TS_CHANNEL  = '3307817';
 const TS_READ_KEY = 'H9TY5CZFFGZIGNOX';
 const GROQ_KEY    = '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';
 const GROQ_MODEL  = 'llama3-8b-8192';
-const LAT         = 44.08;
-const LON         = -69.18;
+const LAT         = 44.09;
+const LON         = -69.05;
 const TZ_OFFSET   = -4; // EDT. Change to -5 for EST (Nov-Mar)
 
 // ============================================================
@@ -546,11 +546,11 @@ function updateStationStatus(online) {
 // ============================================================
 function checkAlerts() {
   const d=latestData, T=d.temp, W=d.windSpeed;
-  if(T<28)        setAdv('Hard freeze warning',`Temperature ${T.toFixed(0)}°F — protect pipes and plants immediately.`,'warning',[{t:'Hard freeze warning',c:'pill-warn'},{t:T.toFixed(0)+'°F',c:'pill-warn'}]);
-  else if(T<36)   setAdv('Frost advisory',`Temperature ${T.toFixed(0)}°F — frost possible. Cover sensitive plants.`,'advisory',[{t:'Frost advisory',c:'pill-watch'},{t:T.toFixed(0)+'°F',c:'pill-watch'}]);
+  if(T<28)        setAdv('Hard freeze warning',`Temperature ${T.toFixed(0)}°F — hard freeze is imminent.`,'warning',[{t:'Hard freeze warning',c:'pill-warn'},{t:T.toFixed(0)+'°F',c:'pill-warn'}]);
+  else if(T<36)   setAdv('Frost advisory',`Temperature ${T.toFixed(0)}°F — frost possible.`,'advisory',[{t:'Frost advisory',c:'pill-watch'},{t:T.toFixed(0)+'°F',c:'pill-watch'}]);
   else if(T>90)   setAdv('Heat advisory',`Temperature ${T.toFixed(0)}°F — limit outdoor exposure and stay hydrated.`,'watch',[{t:'Heat advisory',c:'pill-warn'},{t:T.toFixed(0)+'°F',c:'pill-warn'}]);
   else if(W>39)   setAdv('High wind warning',`Sustained winds ${W.toFixed(0)} mph. Secure outdoor objects.`,'warning',[{t:'High wind warning',c:'pill-warn'},{t:W.toFixed(0)+' mph',c:'pill-warn'}]);
-  else if(W>25)   setAdv('Wind advisory',`Winds ${W.toFixed(0)} mph. Use caution outdoors.`,'watch',[{t:'Wind advisory',c:'pill-watch'},{t:W.toFixed(0)+' mph',c:'pill-watch'}]);
+  else if(W>25)   setAdv('High Wind advisory',`Winds ${W.toFixed(0)} mph. Use caution outdoors.`,'watch',[{t:'Wind advisory',c:'pill-watch'},{t:W.toFixed(0)+' mph',c:'pill-watch'}]);
   else            setAdv('No active advisories','All conditions normal. No watches, warnings, or advisories in effect for Owls Head.','none',[]);
 }
 
@@ -595,42 +595,115 @@ function drawCompass(dir) {
 // SUN GRAPHIC
 // ============================================================
 function drawSun() {
-  const c=document.getElementById('sunCanvas');if(!c||!sunTimes)return;
-  const ctx=c.getContext('2d'),W=c.width,H=c.height;
-  const {dawn,sunrise,noon,sunset,dusk}=sunTimes;
-  const toX=h=>((h-4)/(22-4))*W;
-  const arcY=h=>{const mid=(sunrise+sunset)/2,half=(sunset-sunrise)/2,t=(h-mid)/half;return H-16-(H-36)*(1-t*t);};
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
-  const grad=ctx.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0,'#0d1117');
-  grad.addColorStop(Math.max(0,(dawn-4)/18),'#101828');
-  grad.addColorStop(Math.max(0,(sunrise-4)/18),'#132040');
-  grad.addColorStop(Math.min(1,(sunrise+2-4)/18),'#0d1a35');
-  grad.addColorStop(0.5,'#0d1525');
-  grad.addColorStop(Math.max(0,(sunset-2-4)/18),'#0d1a35');
-  grad.addColorStop(Math.min(1,(sunset-4)/18),'#132040');
-  grad.addColorStop(Math.min(1,(dusk-4)/18),'#101828');
-  grad.addColorStop(1,'#0d1117');
-  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-  ctx.beginPath();ctx.strokeStyle='rgba(239,159,39,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);
-  let first=true;
-  for(let h=sunrise;h<=sunset;h+=0.05){const x=toX(h),y=arcY(h);first?ctx.moveTo(x,y):ctx.lineTo(x,y);first=false;}
-  ctx.stroke();ctx.setLineDash([]);
-  [{h:dawn,col:'#7d859060'},{h:sunrise,col:'#EF9F2760'},{h:noon,col:'#EF9F2740'},{h:sunset,col:'#EF9F2760'},{h:dusk,col:'#7d859060'}].forEach(v=>{
-    ctx.beginPath();ctx.strokeStyle=v.col;ctx.lineWidth=0.5;ctx.setLineDash([2,3]);
-    ctx.moveTo(toX(v.h),8);ctx.lineTo(toX(v.h),H-14);ctx.stroke();ctx.setLineDash([]);
-  });
-  const now=new Date(),nowH=now.getHours()+now.getMinutes()/60;
-  if(nowH>sunrise&&nowH<sunset){
-    const sx=toX(nowH),sy=arcY(nowH);
-    for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*13,sy+Math.sin(a)*13);ctx.lineTo(sx+Math.cos(a)*18,sy+Math.sin(a)*18);ctx.strokeStyle='#EF9F27';ctx.lineWidth=2;ctx.stroke();}
-    ctx.beginPath();ctx.arc(sx,sy,9,0,Math.PI*2);ctx.fillStyle='#EF9F27';ctx.fill();
+  const c = document.getElementById('sunCanvas');
+  if (!c || !sunTimes) return;
+
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  const { dawn, sunrise, noon, sunset, dusk } = sunTimes;
+
+  const toX = h => ((h - 4) / (22 - 4)) * W;
+
+  const arcY = h => {
+    const mid = (sunrise + sunset) / 2;
+    const half = (sunset - sunrise) / 2;
+    const t = (h - mid) / half;
+    return H - 20 - (H - 50) * (1 - t * t);
+  };
+
+  ctx.clearRect(0, 0, W, H);
+
+  // --- SKY GRADIENT (vertical = more natural) ---
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#020617');   // deep night
+  sky.addColorStop(0.25, '#0b1a33'); // early morning
+  sky.addColorStop(0.5, '#1e3a5f');  // daylight blue
+  sky.addColorStop(0.75, '#0b1a33'); // evening
+  sky.addColorStop(1, '#020617');   // night
+
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // --- HORIZON GLOW ---
+  const horizon = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  horizon.addColorStop(0, 'rgba(255,140,0,0)');
+  horizon.addColorStop(1, 'rgba(255,140,0,0.15)');
+  ctx.fillStyle = horizon;
+  ctx.fillRect(0, 0, W, H);
+
+  // --- SUN PATH ---
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,200,100,0.35)';
+  ctx.lineWidth = 2;
+
+  let first = true;
+  for (let h = sunrise; h <= sunset; h += 0.02) {
+    const x = toX(h);
+    const y = arcY(h);
+    first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    first = false;
   }
-  [{t:'Dawn',h:dawn},{t:'Sunrise',h:sunrise},{t:'Noon',h:noon},{t:'Sunset',h:sunset},{t:'Dusk',h:dusk}].forEach(l=>{
-    ctx.fillStyle=l.t==='Sunrise'||l.t==='Sunset'?'#EF9F27':'#7d8590';
-    ctx.font='10px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
-    ctx.fillText(l.t,toX(l.h),H-2);
+  ctx.stroke();
+
+  // --- TIME MARKERS (subtle) ---
+  [dawn, sunrise, noon, sunset, dusk].forEach(h => {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(toX(h), 0);
+    ctx.lineTo(toX(h), H);
+    ctx.stroke();
+  });
+
+  // --- CURRENT SUN POSITION ---
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
+
+  if (nowH > sunrise && nowH < sunset) {
+    const sx = toX(nowH);
+    const sy = arcY(nowH);
+
+    // glow
+    const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, 30);
+    glow.addColorStop(0, 'rgba(255,200,100,0.8)');
+    glow.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // core sun
+    const sunGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, 10);
+    sunGrad.addColorStop(0, '#fff7cc');
+    sunGrad.addColorStop(1, '#ffb347');
+
+    ctx.fillStyle = sunGrad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- LABELS ---
+  const labels = [
+    { t: 'Dawn', h: dawn },
+    { t: 'Sunrise', h: sunrise },
+    { t: 'Noon', h: noon },
+    { t: 'Sunset', h: sunset },
+    { t: 'Dusk', h: dusk }
+  ];
+
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  labels.forEach(l => {
+    ctx.fillStyle =
+      (l.t === 'Sunrise' || l.t === 'Sunset')
+        ? '#ffb347'
+        : 'rgba(255,255,255,0.6)';
+
+    ctx.fillText(l.t, toX(l.h), H - 18);
   });
 }
 
