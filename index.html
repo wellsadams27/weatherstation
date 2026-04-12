@@ -1,345 +1,777 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather Station — Thomaston, ME</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f1117;
-      color: #e0e0e0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 22px;
-      font-weight: 400;
-      margin-bottom: 6px;
-      color: #ffffff;
-    }
-    .subtitle {
-      text-align: center;
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 24px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-      max-width: 900px;
-      margin: 0 auto 24px auto;
-    }
-    .card {
-      background: #1a1d27;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      border: 1px solid #2a2d3a;
-    }
-    .card .label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #666;
-      margin-bottom: 10px;
-    }
-    .card .value {
-      font-size: 32px;
-      font-weight: 300;
-      color: #ffffff;
-    }
-    .card .unit {
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-    .card.temp .value { color: #ff6b6b; }
-    .card.humidity .value { color: #4ecdc4; }
-    .card.pressure .value { color: #a8e6cf; }
-    .card.uv .value { color: #ffd93d; }
-    .card.wind .value { color: #6bcbff; }
-    .card.rain .value { color: #74b9ff; }
-    .section-title {
-      text-align: center;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #444;
-      margin-bottom: 16px;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .status-bar {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #1a1d27;
-      border-radius: 12px;
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #2a2d3a;
-      font-size: 12px;
-      color: #666;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #444;
-      display: inline-block;
-      margin-right: 6px;
-    }
-    .status-dot.online { background: #00b894; }
-    .forecast-card {
-      max-width: 900px;
-      margin: 0 auto 24px auto;
-      background: #1a1d27;
-      border-radius: 12px;
-      padding: 24px;
-      border: 1px solid #2a2d3a;
-    }
-    .forecast-card .forecast-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #666;
-      margin-bottom: 12px;
-    }
-    .forecast-card .forecast-text {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #c0c0c0;
-    }
-    .forecast-card .forecast-meta {
-      font-size: 11px;
-      color: #444;
-      margin-top: 12px;
-    }
-    .refresh-btn {
-      display: block;
-      margin: 0 auto 24px auto;
-      background: #2a2d3a;
-      color: #888;
-      border: 1px solid #3a3d4a;
-      border-radius: 8px;
-      padding: 8px 20px;
-      font-size: 12px;
-      cursor: pointer;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .refresh-btn:hover { background: #3a3d4a; color: #ccc; }
-    .last-updated {
-      text-align: center;
-      font-size: 11px;
-      color: #444;
-      margin-top: 16px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easter Hill Weather Station</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e14;font-family:system-ui,sans-serif;padding:16px;min-height:100vh}
+.dash{background:#0d1117;padding:16px;border-radius:12px;color:#e6edf3;max-width:1200px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:0.5px solid #30363d}
+.header-left h1{font-size:18px;font-weight:500;color:#e6edf3;letter-spacing:0.5px}
+.header-left p{font-size:12px;color:#7d8590;margin-top:2px}
+.status{font-size:12px;color:#7d8590;display:flex;align-items:center;gap:6px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#238636;flex-shrink:0}
+.status-dot.offline{background:#da3633}
+.adv-bar{border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px}
+.adv-bar.none{background:#0d1f17;border:1px solid #1a4028}
+.adv-bar.advisory{background:#0d1520;border:1px solid #1a3a6b}
+.adv-bar.watch{background:#1a1400;border:1px solid #4a3500}
+.adv-bar.warning{background:#1a0800;border:1px solid #6b2200}
+.adv-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.adv-icon.none{background:#0f2d1e;color:#3fb950}
+.adv-icon.advisory{background:#0d2040;color:#58a6ff}
+.adv-icon.watch{background:#2a2000;color:#d29922}
+.adv-icon.warning{background:#2a1000;color:#f85149}
+.adv-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.adv-title.none{color:#3fb950}.adv-title.advisory{color:#58a6ff}.adv-title.watch{color:#d29922}.adv-title.warning{color:#f85149}
+.adv-desc{font-size:12px;color:#8b949e;line-height:1.5}
+.adv-time{font-size:11px;margin-top:4px}
+.adv-time.none{color:#238636}.adv-time.advisory{color:#388bfd}.adv-time.watch{color:#bb8009}.adv-time.warning{color:#da3633}
+.pills{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.pill-warn{background:#2a1000;color:#f85149;border:0.5px solid #6b2200}
+.pill-watch{background:#2a2000;color:#d29922;border:0.5px solid #4a3500}
+.sec{font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 8px;padding-left:2px;border-top:0.5px solid #21262d;padding-top:10px}
+.sec.first{border-top:none;padding-top:0;margin-top:0}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}
+@media(max-width:700px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3,.grid2{grid-template-columns:1fr}}
+.card{background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:12px}
+.lbl{font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:0.8px}
+.val{font-size:20px;font-weight:500;color:#e6edf3}
+.sub{font-size:11px;color:#7d8590;margin-top:3px}
+.gauge-wrap{position:relative;width:110px;height:65px;margin:6px auto 2px}
+.gauge-val{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:16px;font-weight:500;color:#e6edf3;white-space:nowrap}
+.wind-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:10px}
+.wind-stat{padding:6px 8px;border-right:0.5px solid #21262d}
+.wind-stat:last-child{border-right:none}
+.wind-stat .lbl{display:block;margin-bottom:2px}
+.wind-stat .val{font-size:16px;display:block;font-weight:500;color:#e6edf3}
+.wind-stat .sub{display:block}
+.wind-bottom{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:0.5px solid #21262d}
+.wind-dir-big{font-size:26px;font-weight:500;color:#e6edf3;line-height:1}
+.wind-dir-deg{font-size:12px;color:#7d8590;margin-top:1px}
+.station-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #21262d}
+.station-row:last-child{border-bottom:none}
+.online{color:#238636}
+.offline-txt{color:#da3633}
+.graph-section{background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:14px;margin-bottom:10px}
+.graph-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.tbtn{background:#0d1117;border:0.5px solid #30363d;color:#7d8590;font-size:11px;padding:4px 9px;border-radius:6px;cursor:pointer;font-family:system-ui,sans-serif}
+.tbtn:hover{border-color:#378ADD;color:#378ADD}
+.tbtn.active{background:#0d2137;border-color:#185FA5;color:#378ADD}
+.mtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.chart-wrap{position:relative;height:175px}
+.ai-badge{font-size:10px;background:#0d2137;color:#378ADD;border:0.5px solid #185FA5;border-radius:4px;padding:2px 6px;display:inline-block;margin-bottom:6px}
+.hist-row{margin-bottom:10px}
+.hist-label{display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px}
+.hist-track{background:#21262d;border-radius:3px;height:6px;position:relative}
+.hist-fill{height:6px;border-radius:3px;background:#30363d}
+.hist-marker{position:absolute;top:50%;transform:translateY(-50%);width:3px;height:12px;border-radius:2px}
+.hist-legend{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+.hist-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#7d8590}
+.hist-leg-dot{width:8px;height:8px;border-radius:1px}
+</style>
 </head>
 <body>
+<div class="dash">
 
-  <h1>Weather Station</h1>
-  <p class="subtitle">Thomaston, Maine</p>
+<div class="header">
+  <div class="header-left">
+    <h1>Easter Hill Weather Station</h1>
+    <p>Owls Head, Knox County, Maine &mdash; 44.08&deg;N 69.18&deg;W</p>
+  </div>
+  <div style="text-align:right">
+    <div class="status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting...</span></div>
+    <div style="font-size:11px;color:#7d8590;margin-top:2px" id="clock"></div>
+  </div>
+</div>
 
-  <p class="section-title">Current Conditions</p>
+<div id="adv-bar" class="adv-bar none">
+  <div id="adv-icon" class="adv-icon none">&#10003;</div>
+  <div style="flex:1">
+    <div id="adv-title" class="adv-title none">No active advisories</div>
+    <div id="adv-desc" class="adv-desc">All conditions normal. No watches, warnings, or advisories in effect for Owls Head.</div>
+    <div id="adv-pills" class="pills"></div>
+    <div id="adv-time" class="adv-time none">Updated just now</div>
+  </div>
+</div>
 
-  <div class="grid">
-    <div class="card temp">
-      <div class="label">Temperature</div>
-      <div class="value" id="temp">--</div>
-      <div class="unit">°F</div>
+<div class="sec first">Outdoor conditions</div>
+
+<div class="grid4">
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <div class="lbl" style="align-self:flex-start;margin-bottom:4px">Temperature</div>
+    <div class="gauge-wrap"><canvas id="g-temp" width="110" height="65"></canvas><div class="gauge-val" id="v-temp">--</div></div>
+    <div class="sub" id="v-feelslike">Feels like --</div>
+    <div class="sub" id="v-windchill">Wind chill --</div>
+    <div class="sub" id="v-dewpoint">Dew point --</div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <div class="lbl" style="align-self:flex-start;margin-bottom:4px">Humidity</div>
+    <div class="gauge-wrap"><canvas id="g-hum" width="110" height="65"></canvas><div class="gauge-val" id="v-hum">--</div></div>
+    <div class="sub" id="v-hum-desc">--</div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <div class="lbl" style="align-self:flex-start;margin-bottom:4px">Pressure</div>
+    <div class="gauge-wrap"><canvas id="g-pres" width="110" height="65"></canvas><div class="gauge-val" id="v-pres">--</div></div>
+    <div style="font-size:11px;color:#7d8590;margin-top:1px">inHg</div>
+    <div class="sub" id="v-pres-trend">--</div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <div class="lbl" style="align-self:flex-start;margin-bottom:4px">UV Index</div>
+    <div class="gauge-wrap"><canvas id="g-uv" width="110" height="65"></canvas><div class="gauge-val" id="v-uv">--</div></div>
+    <div class="sub" id="v-uv-desc">--</div>
+  </div>
+</div>
+
+<div class="grid3">
+  <div class="card">
+    <div class="lbl" style="margin-bottom:8px">Wind</div>
+    <div class="wind-grid">
+      <div class="wind-stat"><span class="lbl">Speed</span><span class="val" id="v-wspd">--</span><span class="sub" id="v-wspd-kt">--</span></div>
+      <div class="wind-stat"><span class="lbl">Gust</span><span class="val" id="v-wgust">--</span><span class="sub" id="v-wgust-kt">--</span></div>
+      <div class="wind-stat"><span class="lbl">Avg 2min</span><span class="val" id="v-wavg">--</span><span class="sub">&nbsp;</span></div>
+      <div class="wind-stat"><span class="lbl">Wind chill</span><span class="val" id="v-wc2">--</span><span class="sub">&nbsp;</span></div>
     </div>
-    <div class="card humidity">
-      <div class="label">Humidity</div>
-      <div class="value" id="humidity">--</div>
-      <div class="unit">%</div>
-    </div>
-    <div class="card pressure">
-      <div class="label">Pressure</div>
-      <div class="value" id="pressure">--</div>
-      <div class="unit">hPa</div>
-    </div>
-    <div class="card uv">
-      <div class="label">UV Index</div>
-      <div class="value" id="uv">--</div>
-      <div class="unit">index</div>
-    </div>
-    <div class="card wind">
-      <div class="label">Wind Speed</div>
-      <div class="value" id="wind">--</div>
-      <div class="unit">mph</div>
-    </div>
-    <div class="card wind">
-      <div class="label">Wind Direction</div>
-      <div class="value" id="winddir">--</div>
-      <div class="unit">degrees</div>
-    </div>
-    <div class="card rain">
-      <div class="label">Rainfall Today</div>
-      <div class="value" id="rain">--</div>
-      <div class="unit">mm</div>
-    </div>
-    <div class="card rain">
-      <div class="label">Raining Now</div>
-      <div class="value" id="raining">--</div>
-      <div class="unit"></div>
+    <div class="wind-bottom">
+      <div><div class="wind-dir-big" id="v-wdir">--</div><div class="wind-dir-deg" id="v-wdeg">--</div></div>
+      <canvas id="compass" width="68" height="68"></canvas>
     </div>
   </div>
-
-  <p class="section-title">AI Forecast</p>
-
-  <div class="forecast-card">
-    <div class="forecast-label">6 Hour Forecast — Powered by Groq</div>
-    <div class="forecast-text" id="forecast">Waiting for sensor data...</div>
-    <div class="forecast-meta" id="forecast-meta"></div>
+  <div class="card">
+    <div class="lbl" style="margin-bottom:8px">Rainfall</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div class="lbl">Today</div><div class="val" id="v-rain-today">--</div></div>
+      <div><div class="lbl">Rate /hr</div><div class="val" id="v-rain-rate">--</div></div>
+      <div><div class="lbl">This month</div><div class="val" id="v-rain-month">--</div></div>
+      <div><div class="lbl">Raining now</div><div style="font-size:13px;font-weight:500;margin-top:4px" id="v-raining">--</div></div>
+    </div>
   </div>
-
-  <button class="refresh-btn" onclick="getForecast()">Refresh Forecast</button>
-
-  <p class="section-title">Station Status</p>
-
-  <div class="status-bar">
-    <span><span class="status-dot" id="dot"></span><span id="status-text">Connecting...</span></span>
-    <span id="battery">Battery: --</span>
-    <span id="signal">Signal: --</span>
-    <span id="solar">Solar: --</span>
+  <div class="card">
+    <div class="lbl" style="margin-bottom:6px">Indoor</div>
+    <div style="display:flex;gap:20px;margin-bottom:12px">
+      <div><div class="lbl">Temp</div><div class="val" id="v-in-temp">--</div></div>
+      <div><div class="lbl">Humidity</div><div class="val" id="v-in-hum">--</div></div>
+    </div>
+    <div class="lbl" style="margin-bottom:4px">KRKD Airport METAR</div>
+    <div id="metar-display" style="font-size:11px;color:#c9d1d9;font-family:monospace;background:#0d1117;padding:6px 8px;border-radius:6px;line-height:1.8;margin-bottom:6px">Loading...</div>
+    <a href="https://metar-taf.com/KRKD" target="_blank" style="font-size:11px;color:#378ADD;text-decoration:none">View full METAR/TAF for KRKD &#8599;</a>
   </div>
+</div>
 
-  <p class="last-updated" id="updated">Last updated: never</p>
+<div class="sec">Sun &amp; moon</div>
+<div class="grid2">
+  <div class="card">
+    <div class="lbl" style="margin-bottom:10px" id="sun-date">Solar day</div>
+    <canvas id="sunCanvas" width="560" height="110" style="width:100%;height:auto"></canvas>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">
+      <div style="text-align:center"><div class="lbl">Dawn</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-dawn">--</div></div>
+      <div style="text-align:center"><div class="lbl">Sunrise</div><div style="font-size:14px;font-weight:500;color:#EF9F27" id="v-sunrise">--</div></div>
+      <div style="text-align:center"><div class="lbl">Sunset</div><div style="font-size:14px;font-weight:500;color:#EF9F27" id="v-sunset">--</div></div>
+      <div style="text-align:center"><div class="lbl">Dusk</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-dusk">--</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;border-top:0.5px solid #21262d;padding-top:8px">
+      <div style="text-align:center"><div class="lbl">Day length</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-daylength">--</div></div>
+      <div style="text-align:center"><div class="lbl">Daylight left</div><div style="font-size:13px;font-weight:500;color:#378ADD" id="v-dayleft">--</div></div>
+      <div style="text-align:center"><div class="lbl">Solar noon</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-solarnoon">--</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="lbl" style="margin-bottom:10px" id="moon-date">Moon</div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+      <canvas id="moonCanvas" width="80" height="80"></canvas>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#e6edf3;margin-bottom:3px" id="v-moon-phase">--</div>
+        <div style="font-size:12px;color:#7d8590;margin-bottom:6px" id="v-moon-illum">--</div>
+        <div class="lbl" style="margin-bottom:2px">Age</div>
+        <div style="font-size:13px;color:#e6edf3" id="v-moon-age">--</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:0.5px solid #21262d;padding-top:8px">
+      <div><div class="lbl">Moonrise</div><div style="font-size:14px;font-weight:500;color:#e6edf3" id="v-moonrise">--</div></div>
+      <div><div class="lbl">Moonset</div><div style="font-size:14px;font-weight:500;color:#e6edf3" id="v-moonset">--</div></div>
+      <div><div class="lbl">Next full moon</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-nextfull">--</div></div>
+      <div><div class="lbl">Next new moon</div><div style="font-size:13px;font-weight:500;color:#e6edf3" id="v-nextnew">--</div></div>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // ---- REPLACE THESE ----
-    const channelID  = "3307817";
-    const readAPIKey = "H9TY5CZFFGZIGNOX";
-    const groqAPIKey = "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";
-    // -----------------------
+<div class="sec">Historical comparison &mdash; today vs climate normals</div>
+<div class="card" style="margin-bottom:10px">
+  <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+    <div><div class="lbl">Today high</div><div style="font-size:16px;font-weight:500;color:#e6edf3" id="v-today-high">--</div></div>
+    <div><div class="lbl">Today low</div><div style="font-size:16px;font-weight:500;color:#e6edf3" id="v-today-low">--</div></div>
+    <div><div class="lbl">Climate avg high</div><div style="font-size:16px;font-weight:500;color:#e6edf3" id="v-avg-high">--</div></div>
+    <div><div class="lbl">Climate avg low</div><div style="font-size:16px;font-weight:500;color:#e6edf3" id="v-avg-low">--</div></div>
+    <div><div class="lbl">30yr max</div><div style="font-size:16px;font-weight:500;color:#f85149" id="v-rec-high">--</div></div>
+    <div><div class="lbl">30yr min</div><div style="font-size:16px;font-weight:500;color:#58a6ff" id="v-rec-low">--</div></div>
+  </div>
+  <div id="hist-bars"></div>
+  <div class="hist-legend">
+    <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#378ADD"></div>Today low</div>
+    <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#57d97c"></div>Today high</div>
+    <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#888"></div>Climate avg</div>
+    <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#f85149"></div>30yr max</div>
+    <div class="hist-leg-item"><div class="hist-leg-dot" style="background:#58a6ff"></div>30yr min</div>
+  </div>
+</div>
 
-    let currentData = {};
-    let historyData = [];
+<div class="sec">Historical data</div>
+<div class="graph-section">
+  <div class="graph-header">
+    <div style="font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:0.8px">History</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap" id="win-btns">
+      <button class="tbtn" onclick="setWin(1,this)">1h</button>
+      <button class="tbtn" onclick="setWin(2,this)">2h</button>
+      <button class="tbtn active" onclick="setWin(6,this)">6h</button>
+      <button class="tbtn" onclick="setWin(12,this)">12h</button>
+      <button class="tbtn" onclick="setWin(24,this)">24h</button>
+      <button class="tbtn" onclick="setWin(48,this)">48h</button>
+    </div>
+  </div>
+  <div class="mtabs" id="met-btns">
+    <button class="tbtn active" onclick="setMet('temp',this)">Temperature</button>
+    <button class="tbtn" onclick="setMet('humidity',this)">Humidity</button>
+    <button class="tbtn" onclick="setMet('pressure',this)">Pressure</button>
+    <button class="tbtn" onclick="setMet('wind',this)">Wind</button>
+    <button class="tbtn" onclick="setMet('rainfall',this)">Rainfall</button>
+    <button class="tbtn" onclick="setMet('uv',this)">UV</button>
+  </div>
+  <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+</div>
 
-    function calcTrend(current, previous, unit) {
-      if (!previous) return "stable";
-      const diff = current - previous;
-      if (Math.abs(diff) < 0.5) return "stable";
-      return diff > 0 ? `rising ${Math.abs(diff).toFixed(1)}${unit}` : `falling ${Math.abs(diff).toFixed(1)}${unit}`;
+<div class="sec">Forecast &amp; station</div>
+<div class="grid2">
+  <div class="card">
+    <div class="ai-badge">AI forecast &mdash; Groq / LLaMA 3</div>
+    <div class="lbl" style="margin-bottom:6px">6-hour outlook</div>
+    <div style="font-size:13px;color:#c9d1d9;line-height:1.6" id="v-forecast">Loading forecast...</div>
+    <div style="font-size:10px;color:#7d8590;margin-top:8px" id="v-forecast-time">Refreshes every 10 minutes</div>
+  </div>
+  <div class="card">
+    <div class="lbl" style="margin-bottom:8px">Station health</div>
+    <div class="station-row"><span style="font-size:12px;color:#7d8590">Outdoor unit</span><span style="font-size:12px;font-weight:500;color:#da3633" id="v-outdoor-status">Connecting...</span></div>
+    <div class="station-row"><span style="font-size:12px;color:#7d8590">Base station</span><span style="font-size:12px;font-weight:500;color:#da3633" id="v-indoor-status">Connecting...</span></div>
+    <div class="station-row"><span style="font-size:12px;color:#7d8590">Signal quality</span><span style="font-size:12px;font-weight:500;color:#e6edf3" id="v-signal">--</span></div>
+    <div class="station-row"><span style="font-size:12px;color:#7d8590">Solar charging</span><span style="font-size:12px;font-weight:500;color:#e6edf3" id="v-solar">--</span></div>
+    <div class="station-row"><span style="font-size:12px;color:#7d8590">Last update</span><span style="font-size:12px;font-weight:500;color:#e6edf3" id="v-lastupdate">--</span></div>
+  </div>
+</div>
+
+</div>
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const TS_CHANNEL  = '3307817';
+const TS_READ_KEY = 'H9TY5CZFFGZIGNOX';
+const GROQ_KEY    = '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';
+const GROQ_MODEL  = 'llama3-8b-8192';
+const LAT         = 44.08;
+const LON         = -69.18;
+const TZ_OFFSET   = -4; // EDT. Change to -5 for EST (Nov-Mar)
+
+// ============================================================
+// SUN CALCULATIONS (NOAA algorithm)
+// ============================================================
+function calcSunTimes(date) {
+  const rad = Math.PI / 180;
+  const JD = date.getTime() / 86400000 + 2440587.5;
+  const n  = JD - 2451545.0;
+  const L  = (280.46 + 0.9856474 * n) % 360;
+  const g  = (357.528 + 0.9856003 * n) % 360;
+  const lambda = L + 1.915 * Math.sin(g * rad) + 0.02 * Math.sin(2 * g * rad);
+  const epsilon = 23.439 - 0.0000004 * n;
+  const sinDec  = Math.sin(epsilon * rad) * Math.sin(lambda * rad);
+  const dec     = Math.asin(sinDec) / rad;
+  const RA      = Math.atan2(Math.cos(epsilon * rad) * Math.sin(lambda * rad), Math.cos(lambda * rad)) / rad;
+  const GMST    = (6.697375 + 0.0657098242 * n + (date.getUTCHours() + date.getUTCMinutes() / 60)) % 24;
+  const LMST    = (GMST + LON / 15 + 24) % 24;
+  const HA      = LMST - RA / 15;
+  const eqTime  = 4 * (L - RA + (HA < 0 ? 360 : 0) * 0);
+  const solarNoon = (720 - 4 * LON - eqTime) / 60 + TZ_OFFSET;
+  const cosHA   = (Math.cos(90.833 * rad) - Math.sin(LAT * rad) * Math.sin(dec * rad)) / (Math.cos(LAT * rad) * Math.cos(dec * rad));
+  if (cosHA > 1 || cosHA < -1) return null;
+  const HA_sr   = Math.acos(cosHA) / rad;
+  const sunrise = solarNoon - HA_sr * 4 / 60;
+  const sunset  = solarNoon + HA_sr * 4 / 60;
+  const dawnDusk = 18 * 4 / 60;
+  return {
+    dawn:     sunrise - dawnDusk / 2,
+    sunrise,
+    noon:     solarNoon,
+    sunset,
+    dusk:     sunset + dawnDusk / 2,
+    dayLength: sunset - sunrise
+  };
+}
+
+// ============================================================
+// MOON CALCULATIONS
+// ============================================================
+function calcMoon(date) {
+  const JD   = date.getTime() / 86400000 + 2440587.5;
+  const k    = (JD - 2451550.1) / 29.530588853;
+  const age  = ((k % 1) + 1) % 1 * 29.530588853;
+  const illum = (1 - Math.cos(age / 29.530588853 * 2 * Math.PI)) / 2;
+  const waxing = age < 14.765;
+  let phase;
+  if      (age < 1.85)  phase = 'New Moon';
+  else if (age < 7.38)  phase = 'Waxing Crescent';
+  else if (age < 9.22)  phase = 'First Quarter';
+  else if (age < 14.77) phase = 'Waxing Gibbous';
+  else if (age < 16.61) phase = 'Full Moon';
+  else if (age < 22.15) phase = 'Waning Gibbous';
+  else if (age < 23.99) phase = 'Last Quarter';
+  else if (age < 29.53) phase = 'Waning Crescent';
+  else                   phase = 'New Moon';
+  const daysToFull = age < 14.77 ? 14.77 - age : 29.53 - age + 14.77;
+  const daysToNew  = age < 29.53 ? 29.53 - age : 0;
+  const nextFull   = new Date(date.getTime() + daysToFull * 86400000);
+  const nextNew    = new Date(date.getTime() + daysToNew  * 86400000);
+  const fmt = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  // Approximate rise/set (simplified — rises ~50min later each day, new moon rises at sunrise)
+  const baseRise = (age / 29.53) * 24;
+  const riseH    = (baseRise + 6 + TZ_OFFSET + 24) % 24;
+  const setH     = (riseH + 12.4) % 24;
+  const fmtT = h => { const hr=Math.floor(h)%12||12, m=Math.round((h%1)*60).toString().padStart(2,'0'), ap=h%24<12?'AM':'PM'; return hr+':'+m+' '+ap; };
+  return { phase, illum, waxing, age: age.toFixed(1)+' days', rise: fmtT(riseH), set: fmtT(setH), nextFull: fmt(nextFull), nextNew: fmt(nextNew) };
+}
+
+// ============================================================
+// OPEN-METEO CLIMATE NORMALS (free, no key)
+// ============================================================
+async function fetchClimatNormals() {
+  try {
+    const now = new Date();
+    const mm  = now.getMonth() + 1;
+    const dd  = now.getDate();
+    const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${LAT}&longitude=${LON}&start_date=1991-01-01&end_date=2020-12-31&models=EC_Earth3P_HR&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit`;
+    const res = await fetch(url);
+    const d   = await res.json();
+    if (!d || !d.daily) return null;
+    const dates = d.daily.time;
+    const highs = d.daily.temperature_2m_max;
+    const lows  = d.daily.temperature_2m_min;
+    const mmStr = String(mm).padStart(2,'0');
+    const ddStr = String(dd).padStart(2,'0');
+    const pattern = `-${mmStr}-${ddStr}`;
+    const indices = dates.reduce((a,t,i)=>{ if(t.endsWith(pattern)) a.push(i); return a; },[]);
+    if (!indices.length) return null;
+    const h = indices.map(i=>highs[i]).filter(v=>v!=null);
+    const l = indices.map(i=>lows[i]).filter(v=>v!=null);
+    const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+    return {
+      avgHigh:  Math.round(avg(h)),
+      avgLow:   Math.round(avg(l)),
+      recHigh:  Math.round(Math.max(...h)),
+      recLow:   Math.round(Math.min(...l))
+    };
+  } catch(e) {
+    console.error('Climate normals fetch failed:', e);
+    return null;
+  }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let latestData  = {};
+let todayHigh   = null;
+let todayLow    = null;
+let histChart   = null;
+let cW          = 6;
+let cM          = 'temp';
+let forecastAge = 0;
+let sunTimes    = null;
+let climate     = null;
+
+// ============================================================
+// THINGSPEAK
+// ============================================================
+async function fetchLatest() {
+  try {
+    const url = `https://api.thingspeak.com/channels/${TS_CHANNEL}/feeds/last.json?api_key=${TS_READ_KEY}`;
+    const res = await fetch(url);
+    const d   = await res.json();
+    if (!d || !d.field1) throw new Error('No data');
+    latestData = {
+      temp:      parseFloat(d.field1),
+      humidity:  parseFloat(d.field2),
+      pressure:  parseFloat(d.field3),
+      uv:        parseFloat(d.field4),
+      windSpeed: parseFloat(d.field5),
+      windDir:   parseInt(d.field6),
+      rainfall:  parseFloat(d.field7),
+      battery:   parseFloat(d.field8),
+      updated:   new Date(d.created_at)
+    };
+    latestData.pressureInHg = latestData.pressure * 0.02953;
+    const T=latestData.temp, V=latestData.windSpeed, H=latestData.humidity;
+    latestData.windChill = (T<=50&&V>=3) ? Math.round(35.74+0.6215*T-35.75*Math.pow(V,0.16)+0.4275*T*Math.pow(V,0.16)) : null;
+    const Tc=(T-32)*5/9;
+    latestData.dewPoint = Math.round((Tc-((100-H)/5))*9/5+32);
+    if (todayHigh===null||T>todayHigh) todayHigh=T;
+    if (todayLow===null||T<todayLow)   todayLow=T;
+    updateDisplay();
+    checkAlerts();
+    updateStationStatus(true);
+  } catch(e) {
+    console.error('ThingSpeak fetch failed:', e);
+    updateStationStatus(false);
+  }
+}
+
+async function fetchHistory() {
+  try {
+    const results = cW<=2?60:cW<=6?120:cW<=12?200:cW<=24?400:800;
+    const url = `https://api.thingspeak.com/channels/${TS_CHANNEL}/feeds.json?api_key=${TS_READ_KEY}&results=${results}`;
+    const res = await fetch(url);
+    const d   = await res.json();
+    if (!d||!d.feeds) return;
+    const cutoff = Date.now() - cW*3600000;
+    const feeds  = d.feeds.filter(f=>new Date(f.created_at).getTime()>cutoff);
+    const fMap   = {temp:1,humidity:2,pressure:3,uv:4,wind:5,rainfall:7};
+    const fn     = fMap[cM]||1;
+    const labels=[], data=[];
+    let cum=0;
+    feeds.forEach(f=>{
+      const t=new Date(f.created_at), v=parseFloat(f['field'+fn]);
+      if(isNaN(v)) return;
+      labels.push(t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}));
+      if(cM==='rainfall'){cum+=v;data.push(parseFloat(cum.toFixed(3)));}
+      else if(cM==='pressure'){data.push(parseFloat((v*0.02953).toFixed(4)));}
+      else data.push(parseFloat(v.toFixed(2)));
+    });
+    renderChart(labels,data);
+  } catch(e) { console.error('History fetch failed:',e); }
+}
+
+async function fetchMetar() {
+  try {
+    const res = await fetch('https://aviationweather.gov/api/data/metar?ids=KRKD&format=raw&taf=false');
+    const txt = await res.text();
+    document.getElementById('metar-display').innerHTML = txt.trim().replace(/\n/g,'<br>') || 'No data';
+  } catch(e) {
+    document.getElementById('metar-display').textContent = 'Unavailable — see link below';
+  }
+}
+
+async function fetchForecast() {
+  if (!GROQ_KEY||!latestData.temp) return;
+  try {
+    const d=latestData;
+    const prompt=`You are a concise marine weather forecaster for coastal Maine. Given these current conditions at Owls Head, Knox County, Maine, provide a plain English 2-3 sentence 6-hour forecast. Be specific and practical. Temp ${d.temp.toFixed(1)}°F, Humidity ${d.humidity.toFixed(0)}%, Pressure ${d.pressureInHg?.toFixed(2)} inHg, Wind ${d.windSpeed.toFixed(0)} mph from ${d.windDir}°, UV ${d.uv?.toFixed(1)}, Rainfall ${d.rainfall?.toFixed(2)}". Wind chill ${d.windChill?d.windChill+'°F':'N/A'}.`;
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+      body:JSON.stringify({model:GROQ_MODEL,max_tokens:150,messages:[{role:'user',content:prompt}]})
+    });
+    const json=await res.json();
+    const text=json.choices?.[0]?.message?.content;
+    if(text){
+      document.getElementById('v-forecast').textContent=text;
+      document.getElementById('v-forecast-time').textContent='Updated '+new Date().toLocaleTimeString();
     }
+  } catch(e){ console.error('Forecast failed:',e); }
+}
 
-    function fetchData() {
-      const latestUrl  = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
-      const historyUrl = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=6`;
+// ============================================================
+// DISPLAY
+// ============================================================
+function updateDisplay() {
+  const d=latestData; if(!d.temp) return;
+  document.getElementById('v-temp').textContent      = d.temp.toFixed(1)+'°F';
+  document.getElementById('v-feelslike').textContent = 'Feels like '+d.temp.toFixed(0)+'°F';
+  document.getElementById('v-windchill').textContent = d.windChill?'Wind chill '+d.windChill+'°F':'Wind chill N/A';
+  document.getElementById('v-dewpoint').textContent  = 'Dew point '+d.dewPoint+'°F';
+  document.getElementById('v-hum').textContent       = d.humidity.toFixed(0)+'%';
+  document.getElementById('v-hum-desc').textContent  = d.humidity<30?'Dry':d.humidity<60?'Comfortable':d.humidity<80?'Moderate':'High';
+  const p=d.pressureInHg;
+  document.getElementById('v-pres').textContent      = p.toFixed(2);
+  document.getElementById('v-pres-trend').textContent= p>30.2?'High — fair':p<29.8?'Low — unsettled':'Normal';
+  document.getElementById('v-uv').textContent        = (d.uv||0).toFixed(1);
+  document.getElementById('v-uv-desc').textContent   = d.uv<3?'Low':d.uv<6?'Moderate':d.uv<8?'High':d.uv<11?'Very high':'Extreme';
+  const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  const dn=dirs[Math.round(d.windDir/22.5)%16];
+  document.getElementById('v-wspd').textContent    = d.windSpeed.toFixed(0)+' mph';
+  document.getElementById('v-wspd-kt').textContent = (d.windSpeed*0.869).toFixed(1)+' kt';
+  document.getElementById('v-wgust').textContent   = (d.windSpeed*1.3).toFixed(0)+' mph';
+  document.getElementById('v-wgust-kt').textContent= (d.windSpeed*1.3*0.869).toFixed(1)+' kt';
+  document.getElementById('v-wavg').textContent    = d.windSpeed.toFixed(0)+' mph';
+  document.getElementById('v-wc2').textContent     = d.windChill?d.windChill+'°F':'N/A';
+  document.getElementById('v-wdir').textContent    = dn;
+  document.getElementById('v-wdeg').textContent    = d.windDir+'°';
+  drawCompass(d.windDir);
+  document.getElementById('v-rain-today').textContent = (d.rainfall*0.0394).toFixed(2)+'"';
+  document.getElementById('v-rain-rate').textContent  = '0.00"';
+  document.getElementById('v-rain-month').textContent = '--';
+  const r=d.rainfall>0;
+  const re=document.getElementById('v-raining');
+  re.textContent=r?'Yes':'No'; re.style.color=r?'#238636':'#7d8590';
+  const ago=Math.round((Date.now()-d.updated)/60000);
+  document.getElementById('v-lastupdate').textContent=ago<1?'Just now':ago+'m ago';
+  if(todayHigh!==null) document.getElementById('v-today-high').textContent=todayHigh.toFixed(0)+'°F';
+  if(todayLow!==null)  document.getElementById('v-today-low').textContent=todayLow.toFixed(0)+'°F';
+  drawGauge('g-temp',(d.temp+20)/140,'#378ADD');
+  drawGauge('g-hum',d.humidity/100,'#378ADD');
+  drawGauge('g-pres',(p-28)/3.5,'#378ADD');
+  drawGauge('g-uv',(d.uv||0)/11,'#EF9F27');
+  renderHistBars();
+}
 
-      Promise.all([
-        fetch(latestUrl).then(r => r.json()),
-        fetch(historyUrl).then(r => r.json())
-      ]).then(([latest, history]) => {
-        document.getElementById('temp').textContent     = parseFloat(latest.field1).toFixed(1);
-        document.getElementById('humidity').textContent = parseFloat(latest.field2).toFixed(1);
-        document.getElementById('pressure').textContent = parseFloat(latest.field3).toFixed(1);
-        document.getElementById('uv').textContent       = parseFloat(latest.field4).toFixed(1);
-        document.getElementById('wind').textContent     = parseFloat(latest.field5).toFixed(1);
-        document.getElementById('winddir').textContent  = parseFloat(latest.field6).toFixed(0);
-        document.getElementById('rain').textContent     = parseFloat(latest.field7).toFixed(1);
-        document.getElementById('raining').textContent  = latest.field8 == 1 ? "Yes" : "No";
+function updateStationStatus(online) {
+  const dot=document.getElementById('status-dot');
+  const txt=document.getElementById('status-text');
+  if(online){
+    dot.classList.remove('offline');txt.textContent='Station online';
+    document.getElementById('v-outdoor-status').textContent='Online';document.getElementById('v-outdoor-status').className='online';
+    document.getElementById('v-indoor-status').textContent='Online';document.getElementById('v-indoor-status').className='online';
+    document.getElementById('v-signal').textContent='Good';
+    const h=new Date().getHours();
+    document.getElementById('v-solar').textContent=(h>=6&&h<=19)?'Active':'Night — off';
+  } else {
+    dot.classList.add('offline');txt.textContent='Station offline';
+    document.getElementById('v-outdoor-status').textContent='Offline';document.getElementById('v-outdoor-status').className='offline-txt';
+  }
+}
 
-        document.getElementById('dot').classList.add('online');
-        document.getElementById('status-text').textContent = "Online";
+// ============================================================
+// ALERTS
+// ============================================================
+function checkAlerts() {
+  const d=latestData, T=d.temp, W=d.windSpeed;
+  if(T<28)        setAdv('Hard freeze warning',`Temperature ${T.toFixed(0)}°F — protect pipes and plants immediately.`,'warning',[{t:'Hard freeze warning',c:'pill-warn'},{t:T.toFixed(0)+'°F',c:'pill-warn'}]);
+  else if(T<36)   setAdv('Frost advisory',`Temperature ${T.toFixed(0)}°F — frost possible. Cover sensitive plants.`,'advisory',[{t:'Frost advisory',c:'pill-watch'},{t:T.toFixed(0)+'°F',c:'pill-watch'}]);
+  else if(T>90)   setAdv('Heat advisory',`Temperature ${T.toFixed(0)}°F — limit outdoor exposure and stay hydrated.`,'watch',[{t:'Heat advisory',c:'pill-warn'},{t:T.toFixed(0)+'°F',c:'pill-warn'}]);
+  else if(W>39)   setAdv('High wind warning',`Sustained winds ${W.toFixed(0)} mph. Secure outdoor objects.`,'warning',[{t:'High wind warning',c:'pill-warn'},{t:W.toFixed(0)+' mph',c:'pill-warn'}]);
+  else if(W>25)   setAdv('Wind advisory',`Winds ${W.toFixed(0)} mph. Use caution outdoors.`,'watch',[{t:'Wind advisory',c:'pill-watch'},{t:W.toFixed(0)+' mph',c:'pill-watch'}]);
+  else            setAdv('No active advisories','All conditions normal. No watches, warnings, or advisories in effect for Owls Head.','none',[]);
+}
 
-        const time = new Date(latest.created_at);
-        document.getElementById('updated').textContent = "Last updated: " + time.toLocaleTimeString();
+function setAdv(title,desc,cls,pills) {
+  document.getElementById('adv-bar').className='adv-bar '+cls;
+  const ic=document.getElementById('adv-icon');
+  ic.className='adv-icon '+cls;
+  ic.innerHTML=cls==='none'?'&#10003;':cls==='warning'?'&#9940;':cls==='watch'?'&#9888;':'&#9432;';
+  const t=document.getElementById('adv-title');t.className='adv-title '+cls;t.textContent=title;
+  document.getElementById('adv-desc').textContent=desc;
+  document.getElementById('adv-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('');
+  const tm=document.getElementById('adv-time');tm.className='adv-time '+cls;
+  tm.textContent='Updated '+new Date().toLocaleTimeString();
+}
 
-        currentData = latest;
-        historyData = history.feeds;
+// ============================================================
+// GAUGES & COMPASS
+// ============================================================
+function drawGauge(id,pct,color) {
+  const c=document.getElementById(id);if(!c)return;
+  const ctx=c.getContext('2d'),cx=55,cy=61,r=52;
+  ctx.clearRect(0,0,110,65);
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,0);ctx.strokeStyle='#21262d';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+Math.PI*Math.max(0,Math.min(1,pct)));ctx.strokeStyle=color;ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+}
 
-      }).catch(error => {
-        document.getElementById('status-text').textContent = "Connection error";
-        document.getElementById('dot').classList.remove('online');
-      });
-    }
+function drawCompass(dir) {
+  const c=document.getElementById('compass');if(!c)return;
+  const ctx=c.getContext('2d'),cx=34,cy=34,r=28;
+  ctx.clearRect(0,0,68,68);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#161b22';ctx.fill();
+  ['N','E','S','W'].forEach((l,i)=>{
+    const a=(i*90-90)*Math.PI/180;
+    ctx.fillStyle='#7d8590';ctx.font='9px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l,cx+Math.cos(a)*(r-9),cy+Math.sin(a)*(r-9));
+  });
+  const rad=(dir-90)*Math.PI/180;
+  ctx.beginPath();ctx.moveTo(cx+Math.cos(rad)*20,cy+Math.sin(rad)*20);ctx.lineTo(cx+Math.cos(rad+2.5)*6,cy+Math.sin(rad+2.5)*6);ctx.lineTo(cx+Math.cos(rad+Math.PI)*8,cy+Math.sin(rad+Math.PI)*8);ctx.lineTo(cx+Math.cos(rad-2.5)*6,cy+Math.sin(rad-2.5)*6);ctx.closePath();ctx.fillStyle='#378ADD';ctx.fill();
+}
 
-    function getForecast() {
-      if (!currentData.field1) {
-        document.getElementById('forecast').textContent = "Waiting for sensor data...";
-        return;
-      }
+// ============================================================
+// SUN GRAPHIC
+// ============================================================
+function drawSun() {
+  const c=document.getElementById('sunCanvas');if(!c||!sunTimes)return;
+  const ctx=c.getContext('2d'),W=c.width,H=c.height;
+  const {dawn,sunrise,noon,sunset,dusk}=sunTimes;
+  const toX=h=>((h-4)/(22-4))*W;
+  const arcY=h=>{const mid=(sunrise+sunset)/2,half=(sunset-sunrise)/2,t=(h-mid)/half;return H-16-(H-36)*(1-t*t);};
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'#0d1117');
+  grad.addColorStop(Math.max(0,(dawn-4)/18),'#101828');
+  grad.addColorStop(Math.max(0,(sunrise-4)/18),'#132040');
+  grad.addColorStop(Math.min(1,(sunrise+2-4)/18),'#0d1a35');
+  grad.addColorStop(0.5,'#0d1525');
+  grad.addColorStop(Math.max(0,(sunset-2-4)/18),'#0d1a35');
+  grad.addColorStop(Math.min(1,(sunset-4)/18),'#132040');
+  grad.addColorStop(Math.min(1,(dusk-4)/18),'#101828');
+  grad.addColorStop(1,'#0d1117');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  ctx.beginPath();ctx.strokeStyle='rgba(239,159,39,0.35)';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);
+  let first=true;
+  for(let h=sunrise;h<=sunset;h+=0.05){const x=toX(h),y=arcY(h);first?ctx.moveTo(x,y):ctx.lineTo(x,y);first=false;}
+  ctx.stroke();ctx.setLineDash([]);
+  [{h:dawn,col:'#7d859060'},{h:sunrise,col:'#EF9F2760'},{h:noon,col:'#EF9F2740'},{h:sunset,col:'#EF9F2760'},{h:dusk,col:'#7d859060'}].forEach(v=>{
+    ctx.beginPath();ctx.strokeStyle=v.col;ctx.lineWidth=0.5;ctx.setLineDash([2,3]);
+    ctx.moveTo(toX(v.h),8);ctx.lineTo(toX(v.h),H-14);ctx.stroke();ctx.setLineDash([]);
+  });
+  const now=new Date(),nowH=now.getHours()+now.getMinutes()/60;
+  if(nowH>sunrise&&nowH<sunset){
+    const sx=toX(nowH),sy=arcY(nowH);
+    for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*13,sy+Math.sin(a)*13);ctx.lineTo(sx+Math.cos(a)*18,sy+Math.sin(a)*18);ctx.strokeStyle='#EF9F27';ctx.lineWidth=2;ctx.stroke();}
+    ctx.beginPath();ctx.arc(sx,sy,9,0,Math.PI*2);ctx.fillStyle='#EF9F27';ctx.fill();
+  }
+  [{t:'Dawn',h:dawn},{t:'Sunrise',h:sunrise},{t:'Noon',h:noon},{t:'Sunset',h:sunset},{t:'Dusk',h:dusk}].forEach(l=>{
+    ctx.fillStyle=l.t==='Sunrise'||l.t==='Sunset'?'#EF9F27':'#7d8590';
+    ctx.font='10px system-ui';ctx.textAlign='center';ctx.textBaseline='bottom';
+    ctx.fillText(l.t,toX(l.h),H-2);
+  });
+}
 
-      document.getElementById('forecast').textContent = "Generating forecast...";
+// ============================================================
+// MOON GRAPHIC
+// ============================================================
+function drawMoon(illum,waxing) {
+  const c=document.getElementById('moonCanvas');if(!c)return;
+  const ctx=c.getContext('2d'),cx=40,cy=40,r=32;
+  ctx.clearRect(0,0,80,80);
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle='#21262d';ctx.fillRect(0,0,80,80);
+  if(waxing){
+    ctx.fillStyle='#c9d1d9';ctx.fillRect(cx,cy-r,r,r*2);
+    ctx.beginPath();ctx.ellipse(cx,cy,Math.max(1,r*Math.abs(1-2*illum)),r,0,0,Math.PI*2);
+    ctx.fillStyle=illum<0.5?'#c9d1d9':'#21262d';ctx.fill();
+  } else {
+    ctx.fillStyle='#c9d1d9';ctx.fillRect(cx-r,cy-r,r,r*2);
+    ctx.beginPath();ctx.ellipse(cx,cy,Math.max(1,r*Math.abs(1-2*illum)),r,0,0,Math.PI*2);
+    ctx.fillStyle=illum<0.5?'#c9d1d9':'#21262d';ctx.fill();
+  }
+  ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.stroke();
+}
 
-      const oldest      = historyData[0];
-      const tempTrend     = calcTrend(parseFloat(currentData.field1), parseFloat(oldest.field1), "°F");
-      const humidTrend    = calcTrend(parseFloat(currentData.field2), parseFloat(oldest.field2), "%");
-      const pressureTrend = calcTrend(parseFloat(currentData.field3), parseFloat(oldest.field3), " hPa");
-      const windTrend     = calcTrend(parseFloat(currentData.field5), parseFloat(oldest.field5), " mph");
+// ============================================================
+// HISTORICAL BARS
+// ============================================================
+function renderHistBars() {
+  if(!climate||todayHigh===null) return;
+  const lo=climate.recLow-5,hi=climate.recHigh+5,span=hi-lo;
+  const pct=v=>Math.max(0,Math.min(100,((v-lo)/span*100)));
+  document.getElementById('v-avg-high').textContent=climate.avgHigh+'°F';
+  document.getElementById('v-avg-low').textContent=climate.avgLow+'°F';
+  document.getElementById('v-rec-high').textContent=climate.recHigh+'°F';
+  document.getElementById('v-rec-low').textContent=climate.recLow+'°F';
+  const bar=(label,right,markers)=>{
+    const mh=markers.map(m=>`<div class="hist-marker" style="left:${pct(m.v)}%;background:${m.c}"></div>`).join('');
+    return `<div class="hist-row"><div class="hist-label"><span style="color:#7d8590">${label}</span><span style="color:#e6edf3">${right}</span></div><div class="hist-track"><div class="hist-fill" style="width:100%"></div>${mh}</div></div>`;
+  };
+  document.getElementById('hist-bars').innerHTML =
+    bar('Temperature today',`${todayLow.toFixed(0)}°F – ${todayHigh.toFixed(0)}°F`,[
+      {v:todayLow,c:'#378ADD'},{v:todayHigh,c:'#57d97c'},
+      {v:climate.avgLow,c:'#888'},{v:climate.avgHigh,c:'#888'},
+      {v:climate.recHigh,c:'#f85149'},{v:climate.recLow,c:'#58a6ff'}
+    ])+
+    bar(`Climate normals (${climate.avgLow}°F – ${climate.avgHigh}°F)`,`30yr max ${climate.recHigh}°F / min ${climate.recLow}°F`,[
+      {v:climate.avgLow,c:'#888'},{v:climate.avgHigh,c:'#888'},
+      {v:climate.recHigh,c:'#f85149'},{v:climate.recLow,c:'#58a6ff'}
+    ]);
+}
 
-      const now = new Date();
-      const prompt = `You are a concise weather forecasting assistant for a personal weather station.
+// ============================================================
+// HISTORY CHART
+// ============================================================
+function renderChart(labels,data) {
+  const units={temp:'°F',humidity:'%',pressure:' inHg',wind:' mph',rainfall:'"',uv:''};
+  const unit=units[cM];
+  const ctx=document.getElementById('histChart').getContext('2d');
+  if(histChart)histChart.destroy();
+  histChart=new Chart(ctx,{
+    type:cM==='rainfall'?'bar':'line',
+    data:{labels,datasets:[{data,borderColor:'#378ADD',backgroundColor:cM==='rainfall'?'rgba(55,138,221,0.6)':'rgba(55,138,221,0.08)',borderWidth:1.5,pointRadius:0,tension:0.3,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:0.5,titleColor:'#7d8590',bodyColor:'#e6edf3',callbacks:{label:c=>c.parsed.y.toFixed(2)+unit}}},scales:{x:{ticks:{color:'#7d8590',font:{size:10},maxTicksLimit:8,maxRotation:0},grid:{color:'#21262d',lineWidth:0.5},border:{color:'#30363d'}},y:{ticks:{color:'#7d8590',font:{size:10},maxTicksLimit:6,callback:v=>v.toFixed(1)+unit},grid:{color:'#21262d',lineWidth:0.5},border:{color:'#30363d'}}}}
+  });
+}
 
-Current readings from Thomaston, Maine (coastal Knox County):
-- Temperature: ${parseFloat(currentData.field1).toFixed(1)}°F, ${tempTrend} over last 2 hours
-- Humidity: ${parseFloat(currentData.field2).toFixed(1)}%, ${humidTrend} over last 2 hours
-- Pressure: ${parseFloat(currentData.field3).toFixed(1)} hPa, ${pressureTrend} over last 2 hours
-- Wind Speed: ${parseFloat(currentData.field5).toFixed(1)} mph, ${windTrend} over last 2 hours
-- Wind Direction: ${parseFloat(currentData.field6).toFixed(0)}°
-- UV Index: ${parseFloat(currentData.field4).toFixed(1)}
-- Rainfall today: ${parseFloat(currentData.field7).toFixed(1)}mm
-- Currently raining: ${currentData.field8 == 1 ? "Yes" : "No"}
-- Time: ${now.toLocaleTimeString()}, Season: ${getSeason()}
+function setWin(h,btn){cW=h;document.querySelectorAll('#win-btns .tbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');fetchHistory();}
+function setMet(m,btn){cM=m;document.querySelectorAll('#met-btns .tbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');fetchHistory();}
 
-Give a 2-3 sentence plain English 6 hour forecast. Be specific and practical.`;
+// ============================================================
+// DAYLIGHT REMAINING
+// ============================================================
+function updateDaylightLeft() {
+  if(!sunTimes)return;
+  const now=new Date(),sh=Math.floor(sunTimes.sunset),sm=Math.round((sunTimes.sunset%1)*60);
+  const sunset=new Date(now);sunset.setHours(sh,sm,0,0);
+  const diff=sunset-now,el=document.getElementById('v-dayleft');
+  if(diff>0){const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);el.textContent=h+'h '+m+'m';el.style.color='#378ADD';}
+  else{el.textContent='Sunset passed';el.style.color='#7d8590';}
+}
 
-      fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + groqAPIKey.trim()
-        },
-        body: JSON.stringify({
-          model: "llama3-8b-8192",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 150,
-          temperature: 0.4
-        }),
-        redirect: "follow"
-      })
-      .then(r => {
-        if (!r.ok) {
-          return r.text().then(t => { throw new Error(t); });
-        }
-        return r.json();
-      })
-      .then(data => {
-        const forecast = data.choices[0].message.content;
-        document.getElementById('forecast').textContent = forecast;
-        document.getElementById('forecast-meta').textContent =
-          "Generated at " + new Date().toLocaleTimeString() + " · Groq LLaMA 3";
-      })
-      .catch(error => {
-        console.error("Groq error:", error.message);
-        document.getElementById('forecast').textContent = "Forecast unavailable — check console for details";
-      });
-    }
+// ============================================================
+// SUN & MOON UI UPDATE
+// ============================================================
+function updateSunUI() {
+  const now=new Date();
+  const toTime=h=>{const d=new Date();d.setHours(Math.floor(h%24),Math.round((h%1)*60),0,0);return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});};
+  document.getElementById('sun-date').textContent='Solar day — '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  document.getElementById('v-dawn').textContent=toTime(sunTimes.dawn);
+  document.getElementById('v-sunrise').textContent=toTime(sunTimes.sunrise);
+  document.getElementById('v-sunset').textContent=toTime(sunTimes.sunset);
+  document.getElementById('v-dusk').textContent=toTime(sunTimes.dusk);
+  const dl=sunTimes.dayLength;
+  document.getElementById('v-daylength').textContent=Math.floor(dl)+'h '+Math.round((dl%1)*60)+'m';
+  document.getElementById('v-solarnoon').textContent=toTime(sunTimes.noon);
+  updateDaylightLeft();
+  drawSun();
+}
 
-    function getSeason() {
-      const month = new Date().getMonth();
-      if (month >= 2 && month <= 4) return "Spring";
-      if (month >= 5 && month <= 7) return "Summer";
-      if (month >= 8 && month <= 10) return "Autumn";
-      return "Winter";
-    }
+function updateMoonUI(moon) {
+  const now=new Date();
+  document.getElementById('moon-date').textContent='Moon — '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  document.getElementById('v-moon-phase').textContent=moon.phase;
+  document.getElementById('v-moon-illum').textContent=Math.round(moon.illum*100)+'% illuminated';
+  document.getElementById('v-moon-age').textContent=moon.age;
+  document.getElementById('v-moonrise').textContent=moon.rise;
+  document.getElementById('v-moonset').textContent=moon.set;
+  document.getElementById('v-nextfull').textContent=moon.nextFull;
+  document.getElementById('v-nextnew').textContent=moon.nextNew;
+  drawMoon(moon.illum,moon.waxing);
+}
 
-    fetchData();
-    setInterval(fetchData, 30000);
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' — updated live';}
 
-    setTimeout(() => getForecast(), 3000);
-    setInterval(getForecast, 600000);
-  </script>
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const now=new Date();
+  sunTimes=calcSunTimes(now);
+  updateSunUI();
+  const moon=calcMoon(now);
+  updateMoonUI(moon);
+  updateClock();
+  fetchLatest();
+  fetchHistory();
+  fetchMetar();
+  climate=await fetchClimatNormals();
+  renderHistBars();
+  fetchForecast();
+}
 
+init();
+setInterval(updateClock,1000);
+setInterval(updateDaylightLeft,60000);
+setInterval(drawSun,60000);
+setInterval(fetchLatest,30000);
+setInterval(fetchHistory,120000);
+setInterval(fetchMetar,300000);
+setInterval(()=>{forecastAge++;if(forecastAge>=20){fetchForecast();forecastAge=0;}},30000);
+</script>
 </body>
 </html>
