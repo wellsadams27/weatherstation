@@ -225,20 +225,22 @@ body{background:#0a0e14;font-family:system-ui,sans-serif;padding:16px;min-height
       <span style="font-size:13px;font-weight:500;color:#e6edf3">Base reflectivity</span>
       <span style="font-size:11px;color:#7d8590;margin-left:8px">NEXRAD KGYX &mdash; covers Owls Head</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:#7d8590" id="radar-time">--</span>
-      <button class="tbtn" onclick="refreshRadar()">Refresh</button>
-    </div>
+    <a href="https://radar.weather.gov/station/KGYX/standard" target="_blank" style="font-size:11px;color:#378ADD;text-decoration:none">Open full radar &#8599;</a>
   </div>
-  <div class="radar-img-wrap">
-    <img id="radar-img" src="" alt="NWS radar" style="max-width:100%;display:block" onerror="radarError()">
-    <div id="radar-loading" style="position:absolute;color:#7d8590;font-size:13px">Loading radar...</div>
+  <div style="background:#0a0e14;line-height:0">
+    <iframe
+      src="https://radar.weather.gov/station/KGYX/standard"
+      width="100%"
+      height="400"
+      style="border:none;display:block;filter:invert(0.92) hue-rotate(180deg)"
+      title="NWS GYX Radar"
+      loading="lazy">
+    </iframe>
   </div>
   <div class="radar-footer">
     <div style="font-size:11px;color:#7d8590">
-      <span class="radar-dot"></span>Live NWS radar &mdash; updates every 5 minutes
+      <span class="radar-dot"></span>Live NWS radar &mdash; KGYX Gray, ME &mdash; updates every 5 minutes
     </div>
-    <a href="https://radar.weather.gov/station/KGYX/standard" target="_blank" style="font-size:11px;color:#378ADD;text-decoration:none">Open full radar &#8599;</a>
   </div>
 </div>
 
@@ -357,26 +359,11 @@ const GROQ_KEY    = 'REPLACE_WITH_NEW_GROQ_KEY'; // <-- get fresh key at console
 const GROQ_MODEL  = 'llama3-8b-8192';
 const LAT = 44.08, LON = -69.18;
 // Knox County NWS zone code
-const NWS_ZONE = 'MEZ015';
+const NWS_ZONES = ['MEZ027', 'ANZ151']; // Knox County land + Penobscot Bay marine
 
 // ============================================================
 // RADAR
 // ============================================================
-function refreshRadar() {
-  const ts   = Date.now();
-  const img  = document.getElementById('radar-img');
-  const load = document.getElementById('radar-loading');
-  const time = document.getElementById('radar-time');
-  load.style.display = 'block';
-  img.style.display  = 'none';
-  // NWS public radar image — GYX station, base reflectivity
-  img.src = `https://radar.weather.gov/ridge/lite/N0R/GYX_0.png?${ts}`;
-  img.onload = () => {
-    load.style.display = 'none';
-    img.style.display  = 'block';
-    time.textContent   = 'Updated ' + new Date().toLocaleTimeString();
-  };
-}
 
 function radarError() {
   document.getElementById('radar-loading').textContent = 'Radar unavailable — open full radar link below';
@@ -388,7 +375,7 @@ function radarError() {
 // ============================================================
 async function fetchNWSAlerts() {
   try {
-    const res  = await fetch(`https://api.weather.gov/alerts/active?zone=${NWS_ZONE}`);
+    const res = await fetch(`https://api.weather.gov/alerts/active?zone=${NWS_ZONES.join(',')}`);
     const json = await res.json();
     const alerts = json.features || [];
     const container = document.getElementById('nws-adv-container');
@@ -841,7 +828,6 @@ setInterval(fetchLatest,30000);
 setInterval(fetchHistory,120000);
 setInterval(fetchMetar,300000);
 setInterval(fetchNWSAlerts,600000);
-setInterval(refreshRadar,300000);
 setInterval(()=>{forecastAge++;if(forecastAge>=20){fetchForecast();forecastAge=0;}},30000);
 </script>
 </body>
