@@ -93,18 +93,7 @@ body{background:#0a0e14;font-family:system-ui,sans-serif;padding:16px;min-height
 .sun-bottom-stat{padding:8px;text-align:center;border-right:0.5px solid #21262d}
 .sun-bottom-stat:last-child{border-right:none}
 .cloud-layer{font-size:11px;padding:2px 8px;border-radius:12px;background:#21262d;color:#c9d1d9}
-/* Radar */
-.radar-card{background:#161b22;border:0.5px solid #30363d;border-radius:10px;overflow:hidden}
-.radar-header{padding:10px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #21262d}
-.radar-img-wrap{position:relative;background:#0a0e14;min-height:300px;display:flex;align-items:center;justify-content:center}
-.radar-img-wrap img{width:100%;display:block;border:none}
-.radar-footer{padding:8px 12px;border-top:0.5px solid #21262d;display:flex;justify-content:space-between;align-items:center}
-.radar-dot{width:6px;height:6px;border-radius:50%;background:#238636;display:inline-block;margin-right:5px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-</style>
-</head>
-<body>
-<div class="dash">
+
 
 <div class="header">
   <div class="header-left">
@@ -217,32 +206,6 @@ body{background:#0a0e14;font-family:system-ui,sans-serif;padding:16px;min-height
   </div>
 </div>
 
-<!-- Radar -->
-<div class="sec">Radar &mdash; GYX (Gray, ME)</div>
-<div class="radar-card" style="margin-bottom:10px">
-  <div class="radar-header">
-    <div>
-      <span style="font-size:13px;font-weight:500;color:#e6edf3">Base reflectivity</span>
-      <span style="font-size:11px;color:#7d8590;margin-left:8px">NEXRAD KGYX &mdash; covers Owls Head</span>
-    </div>
-    <a href="https://radar.weather.gov/station/KGYX/standard" target="_blank" style="font-size:11px;color:#378ADD;text-decoration:none">Open full radar &#8599;</a>
-  </div>
-  <div style="background:#0a0e14;line-height:0">
-    <iframe
-      src="https://radar.weather.gov/station/KGYX/standard"
-      width="100%"
-      height="400"
-      style="border:none;display:block;filter:invert(0.92) hue-rotate(180deg)"
-      title="NWS GYX Radar"
-      loading="lazy">
-    </iframe>
-  </div>
-  <div class="radar-footer">
-    <div style="font-size:11px;color:#7d8590">
-      <span class="radar-dot"></span>Live NWS radar &mdash; KGYX Gray, ME &mdash; updates every 5 minutes
-    </div>
-  </div>
-</div>
 
 <!-- Sun & Moon -->
 <div class="sec">Sun &amp; moon</div>
@@ -360,15 +323,6 @@ const GROQ_MODEL  = 'llama3-8b-8192';
 const LAT = 44.08, LON = -69.18;
 // Knox County NWS zone code
 const NWS_ZONES = ['MEZ027', 'ANZ151']; // Knox County land + Penobscot Bay marine
-
-// ============================================================
-// RADAR
-// ============================================================
-
-function radarError() {
-  document.getElementById('radar-loading').textContent = 'Radar unavailable — open full radar link below';
-  document.getElementById('radar-img').style.display = 'none';
-}
 
 // ============================================================
 // NWS OFFICIAL ALERTS (Knox County zone MEZ015)
